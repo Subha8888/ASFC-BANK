@@ -1,27 +1,12 @@
-import type {
-  AccountAddress,
-  AccountType,
-  AdminAccount,
-  AdminAccountUpdateInput,
-  AdminProfileUpdateInput,
-  BankAccount,
-  BankingOperationResult,
-  BillCount,
-  CreateAccountInput,
-  DepositMethod,
-  TransactionRecord,
-  TransactionType,
-} from '../types/bank';
-
 export const STORAGE_KEYS = {
   accounts: 'asfc_bank_accounts_v6',
   transactions: 'asfc_bank_transactions_v6',
   sessionAccount: 'asfc_bank_session_account_v6',
   sessionAdmin: 'asfc_bank_session_admin_v6',
   admins: 'asfc_bank_admins_v6',
-} as const;
+};
 
-export const ADMIN_ACCOUNTS: AdminAccount[] = [
+export const ADMIN_ACCOUNTS = [
   {
     adminId: 'AS-9733680877',
     pin: '202666',
@@ -56,9 +41,9 @@ export const ADMIN_ACCOUNTS: AdminAccount[] = [
   },
 ];
 
-export const ATM_DENOMINATIONS = [500, 200, 100, 50, 20, 10] as const;
+export const ATM_DENOMINATIONS = [500, 200, 100, 50, 20, 10];
 
-export const INITIAL_ACCOUNTS: BankAccount[] = [
+export const INITIAL_ACCOUNTS = [
   {
     accountNumber: 'ASFC-1048920101',
     holderName: 'Aarav Sharma',
@@ -139,7 +124,7 @@ export const INITIAL_ACCOUNTS: BankAccount[] = [
   },
 ];
 
-export const INITIAL_TRANSACTIONS: TransactionRecord[] = [
+export const INITIAL_TRANSACTIONS = [
   {
     id: 'tx-1005',
     referenceCode: 'REF-884920',
@@ -216,11 +201,11 @@ export const INITIAL_TRANSACTIONS: TransactionRecord[] = [
   },
 ];
 
-export function roundCurrency(value: number): number {
+export function roundCurrency(value) {
   return Math.round((value + Number.EPSILON) * 100) / 100;
 }
 
-export function formatCurrency(amount: number): string {
+export function formatCurrency(amount) {
   return new Intl.NumberFormat('en-IN', {
     style: 'currency',
     currency: 'INR',
@@ -229,8 +214,8 @@ export function formatCurrency(amount: number): string {
   }).format(amount);
 }
 
-export function formatCardNumber(cardNumber: string, reveal = false): string {
-  const digits = cardNumber.replace(/\D/g, '');
+export function formatCardNumber(cardNumber, reveal = false) {
+  const digits = String(cardNumber || '').replace(/\D/g, '');
   if (digits.length !== 16) return cardNumber;
   if (reveal) {
     return digits.replace(/(\d{4})(?=\d)/g, '$1 ');
@@ -238,8 +223,8 @@ export function formatCardNumber(cardNumber: string, reveal = false): string {
   return `•••• •••• •••• ${digits.slice(-4)}`;
 }
 
-export function formatAadhaarNumber(aadhaarNumber: string, reveal = true): string {
-  const digits = (aadhaarNumber || '').replace(/\D/g, '');
+export function formatAadhaarNumber(aadhaarNumber, reveal = true) {
+  const digits = String(aadhaarNumber || '').replace(/\D/g, '');
   if (digits.length !== 12) return aadhaarNumber || 'Not Provided';
   if (reveal) {
     return digits.replace(/(\d{4})(?=\d)/g, '$1 ');
@@ -247,38 +232,30 @@ export function formatAadhaarNumber(aadhaarNumber: string, reveal = true): strin
   return `•••• •••• ${digits.slice(-4)}`;
 }
 
-export function normalizePanNumber(value: string): string {
-  return value.trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+export function normalizePanNumber(value) {
+  return String(value || '')
+    .trim()
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, '');
 }
 
-export function isValidPanNumber(value: string): boolean {
+export function isValidPanNumber(value) {
   return /^[A-Z0-9]{5,12}$/.test(value);
 }
 
-export function formatAddress(address?: Partial<AccountAddress>): string {
+export function formatAddress(address) {
   if (!address) return 'Not Provided';
   const parts = [address.village, address.district, address.state, address.country]
-    .map((part) => (part ?? '').trim())
+    .map((part) => String(part ?? '').trim())
     .filter(Boolean);
   return parts.length > 0 ? parts.join(', ') : 'Not Provided';
 }
 
-export function maskAccountNumber(accountNumber: string): string {
-  const parts = accountNumber.split('-');
-  if (parts.length === 2 && parts[1].length > 4) {
-    return `${parts[0]}-${'•'.repeat(parts[1].length - 4)}${parts[1].slice(-4)}`;
-  }
-  if (parts.length === 3) {
-    return `${parts[0]}-••••-${parts[2]}`;
-  }
-  return accountNumber;
-}
-
-export function isValidAsfcAccountNumber(accountNumber: string): boolean {
+export function isValidAsfcAccountNumber(accountNumber) {
   return /^ASFC-[A-Z0-9-]{6,18}$/.test(accountNumber);
 }
 
-export function formatDateTime(iso: string): string {
+export function formatDateTime(iso) {
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) return iso;
   return new Intl.DateTimeFormat('en-US', {
@@ -290,7 +267,7 @@ export function formatDateTime(iso: string): string {
   }).format(date);
 }
 
-export function generateReferenceCode(seed?: number): string {
+export function generateReferenceCode(seed) {
   const randomPart =
     seed !== undefined
       ? String(Math.abs(seed) % 1000000).padStart(6, '0')
@@ -298,12 +275,12 @@ export function generateReferenceCode(seed?: number): string {
   return `REF-${randomPart}`;
 }
 
-export function calculateBillBreakdown(amount: number): BillCount[] | null {
+export function calculateBillBreakdown(amount) {
   if (!Number.isFinite(amount) || amount <= 0 || !Number.isInteger(amount) || amount % 10 !== 0) {
     return null;
   }
   let remaining = amount;
-  const bills: BillCount[] = [];
+  const bills = [];
   for (const denom of ATM_DENOMINATIONS) {
     const count = Math.floor(remaining / denom);
     if (count > 0) {
@@ -314,17 +291,16 @@ export function calculateBillBreakdown(amount: number): BillCount[] | null {
   return remaining === 0 ? bills : null;
 }
 
-export function normalizeIdentifier(value: string): string {
-  return value.trim().toUpperCase().replace(/\s+/g, '');
+export function normalizeIdentifier(value) {
+  return String(value || '')
+    .trim()
+    .toUpperCase()
+    .replace(/\s+/g, '');
 }
 
-export function authenticateAccount(
-  accounts: BankAccount[],
-  identifier: string,
-  pin: string
-): { ok: true; account: BankAccount } | { ok: false; error: string } {
+export function authenticateAccount(accounts, identifier, pin) {
   const cleanedId = normalizeIdentifier(identifier);
-  const cleanedPin = pin.trim();
+  const cleanedPin = String(pin || '').trim();
 
   if (!cleanedId) {
     return { ok: false, error: 'Enter your ASFC account number or 16-digit card number.' };
@@ -342,7 +318,6 @@ export function authenticateAccount(
   if (!matched) {
     return { ok: false, error: 'No ASFC Bank account matches that account or card number.' };
   }
-
   if (matched.pin !== cleanedPin) {
     return { ok: false, error: 'Incorrect 4-digit ATM PIN. Please verify and try again.' };
   }
@@ -350,13 +325,7 @@ export function authenticateAccount(
   return { ok: true, account: matched };
 }
 
-export function withdrawFunds(
-  accounts: BankAccount[],
-  transactions: TransactionRecord[],
-  accountNumber: string,
-  amount: number,
-  options?: { channel?: 'ATM Terminal' | 'Digital Portal'; note?: string; timestamp?: string }
-): BankingOperationResult {
+export function withdrawFunds(accounts, transactions, accountNumber, amount, options = {}) {
   const account = accounts.find((a) => a.accountNumber === accountNumber);
   if (!account) {
     return { ok: false, error: 'Active account not found.', accounts, transactions };
@@ -410,7 +379,7 @@ export function withdrawFunds(
 
   const newBalance = roundCurrency(account.balance - amount);
   const newWithdrawnToday = roundCurrency(account.withdrawnToday + amount);
-  const timestamp = options?.timestamp ?? new Date().toISOString();
+  const timestamp = options.timestamp ?? new Date().toISOString();
 
   const updatedAccounts = accounts.map((a) =>
     a.accountNumber === accountNumber
@@ -418,7 +387,7 @@ export function withdrawFunds(
       : a
   );
 
-  const tx: TransactionRecord = {
+  const tx = {
     id: `tx-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
     referenceCode: generateReferenceCode(),
     accountNumber,
@@ -426,8 +395,8 @@ export function withdrawFunds(
     amount,
     balanceAfter: newBalance,
     timestamp,
-    description: options?.note?.trim() || 'ATM Cash Withdrawal',
-    channel: options?.channel ?? 'ATM Terminal',
+    description: options.note?.trim() || 'ATM Cash Withdrawal',
+    channel: options.channel ?? 'ATM Terminal',
     billBreakdown: bills,
   };
 
@@ -440,14 +409,7 @@ export function withdrawFunds(
   };
 }
 
-export function depositFunds(
-  accounts: BankAccount[],
-  transactions: TransactionRecord[],
-  accountNumber: string,
-  amount: number,
-  method: DepositMethod = 'Cash',
-  options?: { channel?: 'ATM Terminal' | 'Digital Portal'; note?: string; timestamp?: string }
-): BankingOperationResult {
+export function depositFunds(accounts, transactions, accountNumber, amount, method = 'Cash', options = {}) {
   const account = accounts.find((a) => a.accountNumber === accountNumber);
   if (!account) {
     return { ok: false, error: 'Active account not found.', accounts, transactions };
@@ -474,13 +436,13 @@ export function depositFunds(
   }
 
   const newBalance = roundCurrency(account.balance + roundedAmount);
-  const timestamp = options?.timestamp ?? new Date().toISOString();
+  const timestamp = options.timestamp ?? new Date().toISOString();
 
   const updatedAccounts = accounts.map((a) =>
     a.accountNumber === accountNumber ? { ...a, balance: newBalance } : a
   );
 
-  const tx: TransactionRecord = {
+  const tx = {
     id: `tx-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
     referenceCode: generateReferenceCode(),
     accountNumber,
@@ -488,8 +450,8 @@ export function depositFunds(
     amount: roundedAmount,
     balanceAfter: newBalance,
     timestamp,
-    description: options?.note?.trim() || `${method} Deposit`,
-    channel: options?.channel ?? 'ATM Terminal',
+    description: options.note?.trim() || `${method} Deposit`,
+    channel: options.channel ?? 'ATM Terminal',
     method,
   };
 
@@ -501,19 +463,7 @@ export function depositFunds(
   };
 }
 
-export function transferFunds(
-  accounts: BankAccount[],
-  transactions: TransactionRecord[],
-  fromAccountNumber: string,
-  toAccountNumber: string,
-  amount: number,
-  options?: {
-    recipientName?: string;
-    note?: string;
-    channel?: 'ATM Terminal' | 'Digital Portal';
-    timestamp?: string;
-  }
-): BankingOperationResult {
+export function transferFunds(accounts, transactions, fromAccountNumber, toAccountNumber, amount, options = {}) {
   const sender = accounts.find((a) => a.accountNumber === fromAccountNumber);
   if (!sender) {
     return { ok: false, error: 'Source account not found.', accounts, transactions };
@@ -567,10 +517,10 @@ export function transferFunds(
     (a) => normalizeIdentifier(a.accountNumber) === cleanedTarget
   );
   const resolvedRecipientName =
-    internalRecipient?.holderName || options?.recipientName?.trim() || 'External Beneficiary';
-  const resolvedTargetAccount = internalRecipient?.accountNumber || toAccountNumber.trim().toUpperCase();
+    internalRecipient?.holderName || options.recipientName?.trim() || 'External Beneficiary';
+  const resolvedTargetAccount = internalRecipient?.accountNumber || String(toAccountNumber).trim().toUpperCase();
 
-  const timestamp = options?.timestamp ?? new Date().toISOString();
+  const timestamp = options.timestamp ?? new Date().toISOString();
   const referenceCode = generateReferenceCode();
   const senderNewBalance = roundCurrency(sender.balance - roundedAmount);
 
@@ -584,8 +534,8 @@ export function transferFunds(
     return a;
   });
 
-  const baseMemo = options?.note?.trim();
-  const outTx: TransactionRecord = {
+  const baseMemo = options.note?.trim();
+  const outTx = {
     id: `tx-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
     referenceCode,
     accountNumber: sender.accountNumber,
@@ -596,7 +546,7 @@ export function transferFunds(
     description: baseMemo
       ? `Transfer to ${resolvedRecipientName} — ${baseMemo}`
       : `Fund Transfer to ${resolvedRecipientName}`,
-    channel: options?.channel ?? 'Digital Portal',
+    channel: options.channel ?? 'Digital Portal',
     counterpartyAccount: resolvedTargetAccount,
     counterpartyName: resolvedRecipientName,
   };
@@ -605,7 +555,7 @@ export function transferFunds(
 
   if (internalRecipient) {
     const recipientNewBalance = roundCurrency(internalRecipient.balance + roundedAmount);
-    const inTx: TransactionRecord = {
+    const inTx = {
       id: `tx-${Date.now() + 1}-${Math.floor(Math.random() * 1000)}`,
       referenceCode,
       accountNumber: internalRecipient.accountNumber,
@@ -616,7 +566,7 @@ export function transferFunds(
       description: baseMemo
         ? `Transfer from ${sender.holderName} — ${baseMemo}`
         : `Fund Transfer from ${sender.holderName}`,
-      channel: options?.channel ?? 'Digital Portal',
+      channel: options.channel ?? 'Digital Portal',
       counterpartyAccount: sender.accountNumber,
       counterpartyName: sender.holderName,
     };
@@ -631,18 +581,12 @@ export function transferFunds(
   };
 }
 
-export function createAccount(
-  accounts: BankAccount[],
-  transactions: TransactionRecord[],
-  input: CreateAccountInput
-):
-  | { ok: true; account: BankAccount; accounts: BankAccount[]; transactions: TransactionRecord[] }
-  | { ok: false; error: string } {
-  const holderName = input.holderName.trim();
-  const email = input.email.trim();
-  const phone = input.phone.trim();
-  const pin = input.pin.trim();
-  const initialDeposit = roundCurrency(input.initialDeposit);
+export function createAccount(accounts, transactions, input) {
+  const holderName = String(input.holderName || '').trim();
+  const email = String(input.email || '').trim();
+  const phone = String(input.phone || '').trim();
+  const pin = String(input.pin || '').trim();
+  const initialDeposit = roundCurrency(Number(input.initialDeposit));
 
   if (holderName.length < 2) {
     return { ok: false, error: 'Account holder name must be at least 2 characters.' };
@@ -687,7 +631,7 @@ export function createAccount(
   const middle = digitsOnly.slice(0, 4);
   const suffix = digitsOnly.slice(-4);
 
-  const rawAadhaar = (input.aadhaarNumber ?? '').replace(/\D/g, '');
+  const rawAadhaar = String(input.aadhaarNumber ?? '').replace(/\D/g, '');
   if (rawAadhaar && !/^\d{12}$/.test(rawAadhaar)) {
     return { ok: false, error: 'Aadhaar number must be exactly 12 digits.' };
   }
@@ -703,25 +647,25 @@ export function createAccount(
   }
   const panNumber = rawPan || `QJ${String(Math.floor(10000 + Math.random() * 89999))}`;
 
-  const address: AccountAddress = {
+  const address = {
     village: input.address?.village?.trim() || 'Mumbai Central',
     district: input.address?.district?.trim() || 'Mumbai City',
     state: input.address?.state?.trim() || 'Maharashtra',
     country: input.address?.country?.trim() || 'India',
   };
 
-  const limitByType: Record<AccountType, number> = {
+  const limitByType = {
     Checking: 30000,
     Savings: 40000,
     'Private Reserve': 60000,
   };
 
-  const newAccount: BankAccount = {
+  const newAccount = {
     accountNumber,
     holderName,
     email,
     phone: phone || '+91 98200 01990',
-    accountType: input.accountType,
+    accountType: input.accountType || 'Checking',
     balance: initialDeposit,
     pin,
     cardNumber: `45328810${middle}${suffix}`,
@@ -732,13 +676,13 @@ export function createAccount(
     panNumber,
     address,
     branchName: 'Mumbai Central Digital Vault · Branch 01',
-    dailyWithdrawalLimit: limitByType[input.accountType],
+    dailyWithdrawalLimit: limitByType[input.accountType] ?? 30000,
     withdrawnToday: 0,
     status: 'Active',
     openedDate: new Date().toISOString().slice(0, 10),
   };
 
-  const openingTx: TransactionRecord = {
+  const openingTx = {
     id: `tx-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
     referenceCode: generateReferenceCode(),
     accountNumber,
@@ -759,10 +703,7 @@ export function createAccount(
   };
 }
 
-export function toggleCardStatus(
-  accounts: BankAccount[],
-  accountNumber: string
-): BankAccount[] {
+export function toggleCardStatus(accounts, accountNumber) {
   return accounts.map((a) =>
     a.accountNumber === accountNumber
       ? { ...a, status: a.status === 'Active' ? 'Frozen' : 'Active' }
@@ -770,25 +711,16 @@ export function toggleCardStatus(
   );
 }
 
-export type TransactionFilter = 'all' | 'withdrawals' | 'deposits' | 'transfers';
-
-export function filterTransactions(
-  transactions: TransactionRecord[],
-  accountNumber: string,
-  filter: TransactionFilter,
-  searchQuery = ''
-): TransactionRecord[] {
-  const query = searchQuery.trim().toLowerCase();
+export function filterTransactions(transactions, accountNumber, filter, searchQuery = '') {
+  const query = String(searchQuery || '').trim().toLowerCase();
 
   return transactions.filter((tx) => {
     if (tx.accountNumber !== accountNumber) return false;
-
     if (filter === 'withdrawals' && tx.type !== 'withdrawal') return false;
     if (filter === 'deposits' && tx.type !== 'deposit') return false;
     if (filter === 'transfers' && tx.type !== 'transfer_out' && tx.type !== 'transfer_in') {
       return false;
     }
-
     if (!query) return true;
 
     const haystack = [
@@ -806,13 +738,9 @@ export function filterTransactions(
   });
 }
 
-export function authenticateAdmin(
-  adminId: string,
-  pin: string,
-  admins: AdminAccount[] = ADMIN_ACCOUNTS
-): { ok: true; admin: AdminAccount } | { ok: false; error: string } {
+export function authenticateAdmin(adminId, pin, admins = ADMIN_ACCOUNTS) {
   const cleanedId = normalizeIdentifier(adminId);
-  const cleanedPin = pin.trim();
+  const cleanedPin = String(pin || '').trim();
 
   if (!cleanedId) {
     return { ok: false, error: 'Enter your authorized ASFC Admin ID.' };
@@ -835,11 +763,7 @@ export function authenticateAdmin(
   return { ok: true, admin: matched };
 }
 
-export function adminUpdateProfile(
-  admins: AdminAccount[],
-  targetAdminId: string,
-  updates: AdminProfileUpdateInput
-): { ok: boolean; error?: string; admins: AdminAccount[]; updatedAdmin?: AdminAccount } {
+export function adminUpdateProfile(admins, targetAdminId, updates) {
   const target = admins.find(
     (a) => normalizeIdentifier(a.adminId) === normalizeIdentifier(targetAdminId)
   );
@@ -847,16 +771,16 @@ export function adminUpdateProfile(
     return { ok: false, error: 'Administrator record not found.', admins };
   }
 
-  const name = updates.name.trim();
-  const position = updates.position.trim();
-  const phone = updates.phone.trim();
-  const aadhaarNumber = updates.aadhaarNumber.replace(/\D/g, '');
+  const name = String(updates.name || '').trim();
+  const position = String(updates.position || '').trim();
+  const phone = String(updates.phone || '').trim();
+  const aadhaarNumber = String(updates.aadhaarNumber || '').replace(/\D/g, '');
   const panNumber = normalizePanNumber(updates.panNumber);
-  const address: AccountAddress = {
-    village: updates.address.village.trim(),
-    district: updates.address.district.trim(),
-    state: updates.address.state.trim(),
-    country: updates.address.country.trim(),
+  const address = {
+    village: String(updates.address?.village || '').trim(),
+    district: String(updates.address?.district || '').trim(),
+    state: String(updates.address?.state || '').trim(),
+    country: String(updates.address?.country || '').trim(),
   };
 
   if (name.length < 2) {
@@ -886,7 +810,7 @@ export function adminUpdateProfile(
     };
   }
 
-  let updatedAdmin: AdminAccount | undefined;
+  let updatedAdmin;
   const nextAdmins = admins.map((a) => {
     if (normalizeIdentifier(a.adminId) !== normalizeIdentifier(targetAdminId)) return a;
     updatedAdmin = {
@@ -904,34 +828,28 @@ export function adminUpdateProfile(
   return { ok: true, admins: nextAdmins, updatedAdmin };
 }
 
-export function adminUpdateAccountDetails(
-  accounts: BankAccount[],
-  transactions: TransactionRecord[],
-  accountNumber: string,
-  updates: AdminAccountUpdateInput,
-  adminId: string
-): BankingOperationResult {
+export function adminUpdateAccountDetails(accounts, transactions, accountNumber, updates, adminId) {
   const target = accounts.find((a) => a.accountNumber === accountNumber);
   if (!target) {
     return { ok: false, error: 'Customer account not found.', accounts, transactions };
   }
 
   const nextAccountNumber = normalizeIdentifier(updates.accountNumber);
-  const holderName = updates.holderName.trim();
-  const email = updates.email.trim();
-  const phone = updates.phone.trim();
-  const aadhaarNumber = updates.aadhaarNumber.replace(/\D/g, '');
+  const holderName = String(updates.holderName || '').trim();
+  const email = String(updates.email || '').trim();
+  const phone = String(updates.phone || '').trim();
+  const aadhaarNumber = String(updates.aadhaarNumber || '').replace(/\D/g, '');
   const panNumber = normalizePanNumber(updates.panNumber);
-  const address: AccountAddress = {
-    village: updates.address.village.trim(),
-    district: updates.address.district.trim(),
-    state: updates.address.state.trim(),
-    country: updates.address.country.trim(),
+  const address = {
+    village: String(updates.address?.village || '').trim(),
+    district: String(updates.address?.district || '').trim(),
+    state: String(updates.address?.state || '').trim(),
+    country: String(updates.address?.country || '').trim(),
   };
-  const branchName = updates.branchName.trim();
-  const pin = updates.pin.trim();
-  const dailyWithdrawalLimit = roundCurrency(updates.dailyWithdrawalLimit);
-  const newBalance = roundCurrency(updates.balance);
+  const branchName = String(updates.branchName || '').trim();
+  const pin = String(updates.pin || '').trim();
+  const dailyWithdrawalLimit = roundCurrency(Number(updates.dailyWithdrawalLimit));
+  const newBalance = roundCurrency(Number(updates.balance));
 
   if (!isValidAsfcAccountNumber(nextAccountNumber)) {
     return {
@@ -1024,7 +942,7 @@ export function adminUpdateAccountDetails(
       : transactions;
 
   const delta = roundCurrency(newBalance - target.balance);
-  let createdTx: TransactionRecord | undefined;
+  let createdTx;
 
   if (delta !== 0) {
     const direction = delta > 0 ? 'credit' : 'debit';
@@ -1054,20 +972,13 @@ export function adminUpdateAccountDetails(
   };
 }
 
-export function adminResetDailyWithdrawal(
-  accounts: BankAccount[],
-  accountNumber: string
-): BankAccount[] {
+export function adminResetDailyWithdrawal(accounts, accountNumber) {
   return accounts.map((a) =>
     a.accountNumber === accountNumber ? { ...a, withdrawnToday: 0 } : a
   );
 }
 
-export function adminDeleteAccount(
-  accounts: BankAccount[],
-  transactions: TransactionRecord[],
-  accountNumber: string
-): { ok: boolean; error?: string; accounts: BankAccount[]; transactions: TransactionRecord[] } {
+export function adminDeleteAccount(accounts, transactions, accountNumber) {
   if (!accounts.some((a) => a.accountNumber === accountNumber)) {
     return { ok: false, error: 'Account not found.', accounts, transactions };
   }
@@ -1078,14 +989,7 @@ export function adminDeleteAccount(
   };
 }
 
-export function getTransactionSignAndLabel(
-  type: TransactionType,
-  adjustmentDirection?: 'credit' | 'debit'
-): {
-  sign: '+' | '-';
-  label: string;
-  isCredit: boolean;
-} {
+export function getTransactionSignAndLabel(type, adjustmentDirection) {
   switch (type) {
     case 'deposit':
       return { sign: '+', label: 'Deposit', isCredit: true };
@@ -1099,14 +1003,16 @@ export function getTransactionSignAndLabel(
       return adjustmentDirection === 'debit'
         ? { sign: '-', label: 'Admin Debit', isCredit: false }
         : { sign: '+', label: 'Admin Credit', isCredit: true };
+    default:
+      return { sign: '+', label: 'Transaction', isCredit: true };
   }
 }
 
-export function generateTransactionsCsv(transactions: TransactionRecord[]): string {
+export function generateTransactionsCsv(transactions) {
   const header = ['Date', 'Reference', 'Type', 'Channel', 'Description', 'Amount', 'Balance After'].join(',');
   const rows = transactions.map((tx) => {
     const { sign, label } = getTransactionSignAndLabel(tx.type, tx.adjustmentDirection);
-    const safeDesc = `"${tx.description.replace(/"/g, '""')}"`;
+    const safeDesc = `"${String(tx.description).replace(/"/g, '""')}"`;
     return [
       tx.timestamp,
       tx.referenceCode,
@@ -1120,13 +1026,7 @@ export function generateTransactionsCsv(transactions: TransactionRecord[]): stri
   return [header, ...rows].join('\n');
 }
 
-export function loadBankState(): {
-  accounts: BankAccount[];
-  transactions: TransactionRecord[];
-  admins: AdminAccount[];
-  sessionAccountNumber: string | null;
-  sessionAdminId: string | null;
-} {
+export function loadBankState() {
   if (typeof window === 'undefined') {
     return {
       accounts: INITIAL_ACCOUNTS,
@@ -1144,9 +1044,9 @@ export function loadBankState(): {
     const rawSession = window.localStorage.getItem(STORAGE_KEYS.sessionAccount);
     const rawAdmin = window.localStorage.getItem(STORAGE_KEYS.sessionAdmin);
 
-    const accounts: BankAccount[] = rawAccounts ? JSON.parse(rawAccounts) : INITIAL_ACCOUNTS;
-    const transactions: TransactionRecord[] = rawTx ? JSON.parse(rawTx) : INITIAL_TRANSACTIONS;
-    const parsedAdmins: AdminAccount[] = rawAdmins ? JSON.parse(rawAdmins) : ADMIN_ACCOUNTS;
+    const accounts = rawAccounts ? JSON.parse(rawAccounts) : INITIAL_ACCOUNTS;
+    const transactions = rawTx ? JSON.parse(rawTx) : INITIAL_TRANSACTIONS;
+    const parsedAdmins = rawAdmins ? JSON.parse(rawAdmins) : ADMIN_ACCOUNTS;
     const admins = Array.isArray(parsedAdmins) && parsedAdmins.length > 0 ? parsedAdmins : ADMIN_ACCOUNTS;
 
     const validAdmin =
@@ -1175,12 +1075,12 @@ export function loadBankState(): {
 }
 
 export function saveBankState(
-  accounts: BankAccount[],
-  transactions: TransactionRecord[],
-  sessionAccountNumber: string | null,
-  sessionAdminId: string | null = null,
-  admins: AdminAccount[] = ADMIN_ACCOUNTS
-): void {
+  accounts,
+  transactions,
+  sessionAccountNumber,
+  sessionAdminId = null,
+  admins = ADMIN_ACCOUNTS
+) {
   if (typeof window === 'undefined') return;
   try {
     window.localStorage.setItem(STORAGE_KEYS.accounts, JSON.stringify(accounts));
