@@ -1,0 +1,6 @@
+{
+  "name": "ASFC Bank",
+  "description": "ASFC Bank ATM simulation and digital banking platform featuring account holder details, cash withdrawals, deposits, fund transfers, authentication, and transaction history.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
